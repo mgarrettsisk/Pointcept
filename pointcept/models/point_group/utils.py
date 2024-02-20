@@ -1,6 +1,6 @@
 import torch
 from torch.autograd import Function
-import pointgroup_ops
+#import pointgroup_ops
 
 
 class BallQueryBatchP(Function):
