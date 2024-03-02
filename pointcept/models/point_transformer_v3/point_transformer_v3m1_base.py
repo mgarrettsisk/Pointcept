@@ -511,6 +511,7 @@ class Embedding(PointModule):
             self.stem.add(act_layer(), name="act")
 
     def forward(self, point: Point):
+        print(point)
         point = self.stem(point)
         return point
 
