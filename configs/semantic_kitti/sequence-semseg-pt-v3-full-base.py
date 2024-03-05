@@ -3,7 +3,7 @@ _base_ = ["../_base_/default_runtime.py"]
 # misc custom setting
 batch_size = 3  # bs: total bs in all gpus
 mix_prob = 0.8
-empty_cache = True
+empty_cache = False
 enable_amp = False
 
 # model settings
@@ -15,15 +15,15 @@ model = dict(
         type="PT-v3m1",
         in_channels=5,
         order=["z", "z-trans", "hilbert", "hilbert-trans"],
-        stride=(2, 2),
-        enc_depths=(2, 2, 4),
-        enc_channels=(32, 64, 128),
-        enc_num_head=(2, 4, 8),
-        enc_patch_size=(1024, 1024, 1024),
-        dec_depths=(2, 2),
-        dec_channels=(64, 128),
-        dec_num_head=(4, 8),
-        dec_patch_size=(1024, 1024),
+        stride=(2, 2, 2, 2),
+        enc_depths=(2, 2, 2, 6, 2),
+        enc_channels=(32, 64, 128, 256, 512),
+        enc_num_head=(2, 4, 8, 16, 32),
+        enc_patch_size=(1024, 1024, 1024, 1024, 1024),
+        dec_depths=(2, 2, 2, 2),
+        dec_channels=(64, 64, 128, 256),
+        dec_num_head=(4, 4, 8, 16),
+        dec_patch_size=(1024, 1024, 1024, 1024),
         mlp_ratio=4,
         qkv_bias=True,
         qk_scale=True,
@@ -78,6 +78,9 @@ ignore_index = -1
 concatenate_scans = False
 stack_scans = False
 sequence_length = 1
+max_training_input_points = 110000*sequence_length
+training_grid_size = 0.2
+validation_grid_size = training_grid_size
 names = [
     "car",
     "bicycle",
@@ -121,7 +124,7 @@ data = dict(
             # dict(type="ElasticDistortion", distortion_params=[[0.2, 0.4], [0.8, 1.6]]),
             dict(
                 type="GridSample",
-                grid_size=0.2,
+                grid_size=training_grid_size,
                 hash_type="fnv",
                 mode="train",
                 keys=("coord", "strength", "segment", "time"),
@@ -129,7 +132,7 @@ data = dict(
             ),
             dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
             dict(type="SphereCrop", sample_rate=0.8, mode="random"),
-            dict(type="SphereCrop", point_max=200000, mode="random"),
+            dict(type="SphereCrop", point_max=max_training_input_points, mode="random"),
             # dict(type="CenterShift", apply_z=False),
             dict(type="ToTensor"),
             dict(
@@ -148,7 +151,7 @@ data = dict(
         transform=[
             dict(
                 type="GridSample",
-                grid_size=0.2,
+                grid_size=validation_grid_size,
                 hash_type="fnv",
                 mode="train",
                 keys=("coord", "strength", "segment", "time"),

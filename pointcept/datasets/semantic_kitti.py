@@ -150,15 +150,14 @@ class SemanticKITTIDataset(DefaultDataset):
         # Create output arrays
         coordinates = np.empty([0, 3])
         remissions = np.empty([0, 1])
-        time_data = np.loadtxt(time_file).reshape(-1, 1)
+        time_data = (np.loadtxt(time_file, dtype=np.float32).reshape(-1, 1))
         times = np.empty([0, 1])
-        labels = np.empty([0])
+        labels = []
 
         # Load times for sequence
         selected_time = time_data[index]
 
         if self.concatenate_scans:
-            # simply concatenate the scans alongside the time dimension in the data_dict
             for i, scan in enumerate(scans):
                 # Open the scan file
                 scan_filename = str(scan).zfill(6) + ".bin"
@@ -167,11 +166,16 @@ class SemanticKITTIDataset(DefaultDataset):
                     scan = np.fromfile(scan_data, dtype=np.float32).reshape(-1, 4)
 
                 # Append new scan to coordinates
-                coordinates = np.vstack((coordinates, scan[:, :3]))
+                coordinates = np.vstack((coordinates,
+                                         scan[:, :3]
+                                         )
+                                        )
                 # Append new remissions
                 new_remissions = scan[:, -1].reshape([-1, 1])
-                remissions = np.vstack((remissions, new_remissions))
-
+                remissions = np.vstack((remissions,
+                                        new_remissions
+                                        )
+                                       )
                 # Append times for the scan
                 times = np.vstack((times,
                                    np.full_like(new_remissions,
@@ -192,17 +196,21 @@ class SemanticKITTIDataset(DefaultDataset):
                     segment = np.zeros(scan.shape[0]).astype(np.int32)
 
                 # Append the labels for the scan
-                labels = np.hstack((labels, segment))
+                labels = np.hstack((labels,
+                                    segment
+                                    )
+                                   ).astype(np.int32)
 
         elif self.stack_scans:
             # do the Semantic Kitti API "generate sequential" transformation
             raise NotImplementedError
         else:
+            # do the original data loader from pointcept
             raise NotImplementedError
-        print("\nCoordinates shape: " + str(np.shape(coordinates)))
-        print("\nRemissions shape: " + str(np.shape(remissions)))
-        print("\nTimes shape: " + str(np.shape(times)))
-        print("\nLabels shape: " + str(np.shape(labels)))
+        # print("\nCoordinates shape: " + str(np.shape(coordinates)))
+        # print("\nRemissions shape: " + str(np.shape(remissions)))
+        # print("\nTimes shape: " + str(np.shape(times)))
+        # print("\nLabels shape: " + str(np.shape(labels)))
         data_dict = dict(coord=coordinates, strength=remissions, time=times, segment=labels)
         return data_dict
 

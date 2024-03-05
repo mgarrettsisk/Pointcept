@@ -78,6 +78,9 @@ ignore_index = -1
 concatenate_scans = False
 stack_scans = False
 sequence_length = 1
+max_training_input_points = 110000*sequence_length
+training_grid_size = 0.2
+validation_grid_size = training_grid_size
 names = [
     "car",
     "bicycle",
@@ -129,7 +132,7 @@ data = dict(
             ),
             dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
             dict(type="SphereCrop", sample_rate=0.8, mode="random"),
-            dict(type="SphereCrop", point_max=200000, mode="random"),
+            dict(type="SphereCrop", point_max=max_training_input_points, mode="random"),
             # dict(type="CenterShift", apply_z=False),
             dict(type="ToTensor"),
             dict(
@@ -148,7 +151,7 @@ data = dict(
         transform=[
             dict(
                 type="GridSample",
-                grid_size=0.2,
+                grid_size=training_grid_size,
                 hash_type="fnv",
                 mode="train",
                 keys=("coord", "strength", "segment", "time"),
@@ -174,7 +177,7 @@ data = dict(
         test_cfg=dict(
             voxelize=dict(
                 type="GridSample",
-                grid_size=0.05,
+                grid_size=validation_grid_size,
                 hash_type="fnv",
                 mode="test",
                 return_grid_coord=True,

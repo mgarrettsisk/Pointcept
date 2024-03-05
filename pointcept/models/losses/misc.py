@@ -36,6 +36,7 @@ class CrossEntropyLoss(nn.Module):
         )
 
     def forward(self, pred, target):
+        # target = target.type(torch.LongTensor)
         return self.loss(pred, target) * self.loss_weight
 
 

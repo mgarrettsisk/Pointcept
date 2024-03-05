@@ -45,7 +45,6 @@ class Collect(object):
             data[key] = torch.tensor([data_dict[value].shape[0]])
         for name, keys in self.kwargs.items():
             name = name.replace("_keys", "")
-            print("torch.cat name: " + name)
             assert isinstance(keys, Sequence)
             data[name] = torch.cat([data_dict[key].float() for key in keys], dim=1)
         return data
@@ -216,6 +215,8 @@ class RandomDropout(object):
                 data_dict["segment"] = data_dict["segment"][idx]
             if "instance" in data_dict.keys():
                 data_dict["instance"] = data_dict["instance"][idx]
+            if "time" in data_dict.keys():
+                data_dict["time"] = data_dict["time"][idx]
         return data_dict
 
 
@@ -969,6 +970,8 @@ class SphereCrop(object):
                         ]
                     if "strength" in data_dict.keys():
                         data_crop_dict["strength"] = data_dict["strength"][idx_crop]
+                    if "time" in data_dict.keys():
+                        data_crop_dict["time"] = data_dict["time"][idx_crop]
                     data_crop_dict["weight"] = dist2[idx_crop]
                     data_crop_dict["index"] = data_dict["index"][idx_crop]
                     data_part_list.append(data_crop_dict)
@@ -1017,6 +1020,8 @@ class SphereCrop(object):
                 data_dict["displacement"] = data_dict["displacement"][idx_crop]
             if "strength" in data_dict.keys():
                 data_dict["strength"] = data_dict["strength"][idx_crop]
+            if "time" in data_dict.keys():
+                data_dict["time"] = data_dict["time"][idx_crop]
         return data_dict
 
 
