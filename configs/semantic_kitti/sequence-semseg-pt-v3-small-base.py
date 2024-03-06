@@ -1,6 +1,9 @@
 _base_ = ["../_base_/default_runtime.py"]
 
 # misc custom setting
+max_training_input_points = 200000
+training_grid_size = 0.2
+validation_grid_size = 0.2
 batch_size = 3  # bs: total bs in all gpus
 mix_prob = 0.8
 empty_cache = True
@@ -59,8 +62,8 @@ model = dict(
 )
 
 # scheduler settings
-epoch = 20
-eval_epoch = 20
+epoch = 25
+eval_epoch = 25
 optimizer = dict(type="AdamW", lr=0.0004, weight_decay=0.005)
 scheduler = dict(
     type="OneCycleLR",
@@ -75,12 +78,9 @@ scheduler = dict(
 dataset_type = "SemanticKITTIDataset"
 data_root = "data/semantic_kitti"
 ignore_index = -1
-concatenate_scans = False
+concatenate_scans = True
 stack_scans = False
-sequence_length = 1
-max_training_input_points = 110000*sequence_length
-training_grid_size = 0.2
-validation_grid_size = training_grid_size
+sequence_length = 5
 names = [
     "car",
     "bicycle",
@@ -137,7 +137,7 @@ data = dict(
             dict(type="ToTensor"),
             dict(
                 type="Collect",
-                keys=("coord", "grid_coord", "segment", "time"),
+                keys=("coord", "grid_coord", "segment"),
                 feat_keys=("coord", "strength", "time"),
             ),
         ],
@@ -161,7 +161,7 @@ data = dict(
             dict(type="ToTensor"),
             dict(
                 type="Collect",
-                keys=("coord", "grid_coord", "segment", "time"),
+                keys=("coord", "grid_coord", "segment"),
                 feat_keys=("coord", "strength", "time"),
             ),
         ],
@@ -177,11 +177,11 @@ data = dict(
         test_cfg=dict(
             voxelize=dict(
                 type="GridSample",
-                grid_size=validation_grid_size,
+                grid_size=0.05,
                 hash_type="fnv",
                 mode="test",
                 return_grid_coord=True,
-                keys=("coord", "strength"),
+                keys=("coord", "strength", "time"),
             ),
             crop=None,
             post_transform=[
@@ -193,7 +193,7 @@ data = dict(
                 dict(
                     type="Collect",
                     keys=("coord", "grid_coord", "index"),
-                    feat_keys=("coord", "strength"),
+                    feat_keys=("coord", "strength", "time"),
                 ),
             ],
             aug_transform=[

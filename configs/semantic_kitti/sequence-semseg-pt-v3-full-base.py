@@ -181,7 +181,7 @@ data = dict(
                 hash_type="fnv",
                 mode="test",
                 return_grid_coord=True,
-                keys=("coord", "strength"),
+                keys=("coord", "strength", "time"),
             ),
             crop=None,
             post_transform=[
@@ -192,8 +192,8 @@ data = dict(
                 dict(type="ToTensor"),
                 dict(
                     type="Collect",
-                    keys=("coord", "grid_coord", "index"),
-                    feat_keys=("coord", "strength"),
+                    keys=("coord", "grid_coord", "index", "time"),
+                    feat_keys=("coord", "strength", "time"),
                 ),
             ],
             aug_transform=[

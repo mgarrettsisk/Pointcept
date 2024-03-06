@@ -115,7 +115,7 @@ class InformationWriter(HookBase):
                 key=key, value=self.trainer.storage.history(key).val
             )
         lr = self.trainer.optimizer.state_dict()["param_groups"][0]["lr"]
-        self.trainer.comm_info["iter_info"] += "Lr: {lr:.5f}".format(lr=lr)
+        self.trainer.comm_info["iter_info"] += "Lr: {lr:.8f}".format(lr=lr)
         self.trainer.logger.info(self.trainer.comm_info["iter_info"])
         self.trainer.comm_info["iter_info"] = ""  # reset iter info
         if self.trainer.writer is not None:
