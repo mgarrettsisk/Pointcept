@@ -1,11 +1,11 @@
 _base_ = ["../_base_/default_runtime.py"]
 
 # misc custom setting
-max_training_input_points = 200000
+max_training_input_points = 110000
 training_grid_size = 0.2
 validation_grid_size = 0.2
 testing_grid_size = 0.2
-batch_size = 4  # bs: total bs in all gpus
+batch_size = 6  # bs: total bs in all gpus
 mix_prob = 0.8
 empty_cache = False
 enable_amp = False
@@ -17,17 +17,17 @@ model = dict(
     backbone_out_channels=64,
     backbone=dict(
         type="PT-v3m1",
-        in_channels=5,
+        in_channels=4,
         order=["z", "z-trans", "hilbert", "hilbert-trans"],
-        stride=(2, 2, 2, 2),
-        enc_depths=(2, 2, 2, 6, 2),
-        enc_channels=(32, 64, 128, 256, 512),
-        enc_num_head=(2, 4, 8, 16, 32),
-        enc_patch_size=(1024, 1024, 1024, 1024, 1024),
-        dec_depths=(2, 2, 2, 2),
-        dec_channels=(64, 64, 128, 256),
-        dec_num_head=(4, 4, 8, 16),
-        dec_patch_size=(1024, 1024, 1024, 1024),
+        stride=(2,),
+        enc_depths=(2, 2),
+        enc_channels=(32, 64),
+        enc_num_head=(2, 4),
+        enc_patch_size=(1024, 1024),
+        dec_depths=(2,),
+        dec_channels=(64,),
+        dec_num_head=(4,),
+        dec_patch_size=(1024,),
         mlp_ratio=4,
         qkv_bias=True,
         qk_scale=True,
@@ -70,7 +70,7 @@ optimizer = dict(type="AdamW", lr=0.0004, weight_decay=0.005)
 scheduler = dict(
     type="OneCycleLR",
     max_lr=optimizer["lr"],
-    pct_start=0.02,
+    pct_start=0.002,
     anneal_strategy="cos",
     div_factor=10.0,
     final_div_factor=100.0,
@@ -80,9 +80,9 @@ scheduler = dict(
 dataset_type = "SemanticKITTIDataset"
 data_root = "data/semantic_kitti"
 ignore_index = -1
-concatenate_scans = True
+concatenate_scans = False
 stack_scans = False
-sequence_length = 5
+sequence_length = 1
 names = [
     "car",
     "bicycle",
@@ -129,7 +129,7 @@ data = dict(
                 grid_size=training_grid_size,
                 hash_type="fnv",
                 mode="train",
-                keys=("coord", "strength", "segment", "time"),
+                keys=("coord", "strength", "segment"),
                 return_grid_coord=True,
             ),
             dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
@@ -140,7 +140,7 @@ data = dict(
             dict(
                 type="Collect",
                 keys=("coord", "grid_coord", "segment"),
-                feat_keys=("coord", "strength", "time"),
+                feat_keys=("coord", "strength"),
             ),
         ],
         test_mode=False,
@@ -156,7 +156,7 @@ data = dict(
                 grid_size=validation_grid_size,
                 hash_type="fnv",
                 mode="train",
-                keys=("coord", "strength", "segment", "time"),
+                keys=("coord", "strength", "segment"),
                 return_grid_coord=True,
             ),
             dict(type="PointClip", point_cloud_range=(-35.2, -35.2, -4, 35.2, 35.2, 2)),
@@ -164,7 +164,7 @@ data = dict(
             dict(
                 type="Collect",
                 keys=("coord", "grid_coord", "segment"),
-                feat_keys=("coord", "strength", "time"),
+                feat_keys=("coord", "strength"),
             ),
         ],
         test_mode=False,
@@ -183,7 +183,7 @@ data = dict(
                 hash_type="fnv",
                 mode="test",
                 return_grid_coord=True,
-                keys=("coord", "strength", "time"),
+                keys=("coord", "strength"),
             ),
             crop=None,
             post_transform=[
@@ -195,7 +195,7 @@ data = dict(
                 dict(
                     type="Collect",
                     keys=("coord", "grid_coord", "index"),
-                    feat_keys=("coord", "strength", "time"),
+                    feat_keys=("coord", "strength"),
                 ),
             ],
             aug_transform=[

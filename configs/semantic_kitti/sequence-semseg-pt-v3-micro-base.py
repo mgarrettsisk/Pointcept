@@ -1,11 +1,11 @@
 _base_ = ["../_base_/default_runtime.py"]
 
 # misc custom setting
-max_training_input_points = 200000
+max_training_input_points = 550000
 training_grid_size = 0.2
 validation_grid_size = 0.2
 testing_grid_size = 0.2
-batch_size = 4  # bs: total bs in all gpus
+batch_size = 6  # bs: total bs in all gpus
 mix_prob = 0.8
 empty_cache = False
 enable_amp = False
@@ -19,15 +19,15 @@ model = dict(
         type="PT-v3m1",
         in_channels=5,
         order=["z", "z-trans", "hilbert", "hilbert-trans"],
-        stride=(2, 2, 2, 2),
-        enc_depths=(2, 2, 2, 6, 2),
-        enc_channels=(32, 64, 128, 256, 512),
-        enc_num_head=(2, 4, 8, 16, 32),
-        enc_patch_size=(1024, 1024, 1024, 1024, 1024),
-        dec_depths=(2, 2, 2, 2),
-        dec_channels=(64, 64, 128, 256),
-        dec_num_head=(4, 4, 8, 16),
-        dec_patch_size=(1024, 1024, 1024, 1024),
+        stride=(2,),
+        enc_depths=(2, 2),
+        enc_channels=(32, 64),
+        enc_num_head=(2, 4),
+        enc_patch_size=(1024, 1024),
+        dec_depths=(2,),
+        dec_channels=(64,),
+        dec_num_head=(4,),
+        dec_patch_size=(1024,),
         mlp_ratio=4,
         qkv_bias=True,
         qk_scale=True,
@@ -70,7 +70,7 @@ optimizer = dict(type="AdamW", lr=0.0004, weight_decay=0.005)
 scheduler = dict(
     type="OneCycleLR",
     max_lr=optimizer["lr"],
-    pct_start=0.02,
+    pct_start=0.002,
     anneal_strategy="cos",
     div_factor=10.0,
     final_div_factor=100.0,

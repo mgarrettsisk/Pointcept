@@ -80,12 +80,12 @@ echo " =========> RUN TASK <========="
 
 if [ "${WEIGHT}" = "None" ]
 then
-    CUDA_LAUNCH_BLOCKING=1 $PYTHON "$CODE_DIR"/tools/$TRAIN_CODE \
+    CUDA_LAUNCH_BLOCKING=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PYTHON "$CODE_DIR"/tools/$TRAIN_CODE \
     --config-file "$CONFIG_DIR" \
     --num-gpus "$GPU" \
     --options save_path="$EXP_DIR"
 else
-    CUDA_LAUNCH_BLOCKING=1 $PYTHON "$CODE_DIR"/tools/$TRAIN_CODE \
+    CUDA_LAUNCH_BLOCKING=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PYTHON "$CODE_DIR"/tools/$TRAIN_CODE \
     --config-file "$CONFIG_DIR" \
     --num-gpus "$GPU" \
     --options save_path="$EXP_DIR" resume="$RESUME" weight="$WEIGHT"

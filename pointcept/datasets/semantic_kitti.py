@@ -24,8 +24,8 @@ class SemanticKITTIDataset(DefaultDataset):
         test_cfg=None,
         loop=1,
         ignore_index=-1,
-        sequence_length=5,
-        concatenate_scans=True,
+        sequence_length=1,
+        concatenate_scans=False,
         stack_scans=False
     ):
         self.ignore_index = ignore_index
@@ -132,32 +132,32 @@ class SemanticKITTIDataset(DefaultDataset):
 
     def get_data(self, idx):
 
-        data_index = idx % len(self.data_list)
-        sequence, index = self.map_data_to_sequence_index(data_index)
-        sequence = str(sequence).zfill(2)
-
-        if index < self.sequence_length:
-            index = random.randrange(self.sequence_length, self.sequence_length*5, 1)
-
-        # Create list of scan indices
-        scans = np.arange(index, index-self.sequence_length, -1)
-
-        # Set up the appropriate paths/files
-        scan_path = os.path.join(self.data_root, "dataset", "sequences", sequence, "velodyne")
-        time_file = open(os.path.join(self.data_root, "dataset", "sequences", sequence, "times.txt"))
-        label_path = os.path.join(self.data_root, "dataset", "sequences", sequence, "labels")
-
-        # Create output arrays
-        coordinates = np.empty([0, 3])
-        remissions = np.empty([0, 1])
-        time_data = (np.loadtxt(time_file, dtype=np.float32).reshape(-1, 1))
-        times = np.empty([0, 1])
-        labels = []
-
-        # Load times for sequence
-        selected_time = time_data[index]
-
         if self.concatenate_scans:
+            # Concatenate each scan with additional time dimension
+            data_index = idx % len(self.data_list)
+            sequence, index = self.map_data_to_sequence_index(data_index)
+            sequence = str(sequence).zfill(2)
+
+            if index < self.sequence_length:
+                index = random.randrange(self.sequence_length, self.sequence_length * 5, 1)
+
+            # Create list of scan indices
+            scans = np.arange(index, index - self.sequence_length, -1)
+
+            # Set up the appropriate paths/files
+            scan_path = os.path.join(self.data_root, "dataset", "sequences", sequence, "velodyne")
+            time_file = open(os.path.join(self.data_root, "dataset", "sequences", sequence, "times.txt"))
+
+            # Create output arrays
+            coordinates = np.empty([0, 3])
+            remissions = np.empty([0, 1])
+            time_data = (np.loadtxt(time_file, dtype=np.float32).reshape(-1, 1))
+            times = np.empty([0, 1])
+            labels = []
+
+            # Load times for sequence
+            selected_time = time_data[index]
+
             for i, scan in enumerate(scans):
                 # Open the scan file
                 scan_filename = str(scan).zfill(6) + ".bin"
@@ -201,17 +201,36 @@ class SemanticKITTIDataset(DefaultDataset):
                                     )
                                    ).astype(np.int32)
 
+            data_dict = dict(coord=coordinates, strength=remissions, time=times, segment=labels)
+
         elif self.stack_scans:
             # do the Semantic Kitti API "generate sequential" transformation
             raise NotImplementedError
+
         else:
-            # do the original data loader from pointcept
-            raise NotImplementedError
+            # Original method for single scan training and validation
+            data_path = self.data_list[idx % len(self.data_list)]
+            with open(data_path, "rb") as b:
+                scan = np.fromfile(b, dtype=np.float32).reshape(-1, 4)
+            coord = scan[:, :3]
+            strength = scan[:, -1].reshape([-1, 1])
+
+            label_file = data_path.replace("velodyne", "labels").replace(".bin", ".label")
+            if os.path.exists(label_file):
+                with open(label_file, "rb") as a:
+                    segment = np.fromfile(a, dtype=np.int32).reshape(-1)
+                    segment = np.vectorize(self.learning_map.__getitem__)(
+                        segment & 0xFFFF
+                    ).astype(np.int32)
+            else:
+                segment = np.zeros(scan.shape[0]).astype(np.int32)
+
+            data_dict = dict(coord=coord, strength=strength, segment=segment)
+
         # print("\nCoordinates shape: " + str(np.shape(coordinates)))
         # print("\nRemissions shape: " + str(np.shape(remissions)))
         # print("\nTimes shape: " + str(np.shape(times)))
         # print("\nLabels shape: " + str(np.shape(labels)))
-        data_dict = dict(coord=coordinates, strength=remissions, time=times, segment=labels)
         return data_dict
 
     def get_data_name(self, idx):

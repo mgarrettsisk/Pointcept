@@ -1,12 +1,13 @@
 _base_ = ["../_base_/default_runtime.py"]
 
 # misc custom setting
-max_training_input_points = 200000
+max_training_input_points = 550000
 training_grid_size = 0.2
 validation_grid_size = 0.2
-batch_size = 3  # bs: total bs in all gpus
+testing_grid_size = 0.2
+batch_size = 4  # bs: total bs in all gpus
 mix_prob = 0.8
-empty_cache = True
+empty_cache = False
 enable_amp = False
 
 # model settings
@@ -19,7 +20,7 @@ model = dict(
         in_channels=5,
         order=["z", "z-trans", "hilbert", "hilbert-trans"],
         stride=(2, 2),
-        enc_depths=(2, 2, 4),
+        enc_depths=(2, 2, 2),
         enc_channels=(32, 64, 128),
         enc_num_head=(2, 4, 8),
         enc_patch_size=(1024, 1024, 1024),
@@ -62,13 +63,13 @@ model = dict(
 )
 
 # scheduler settings
-epoch = 25
-eval_epoch = 25
+epoch = 20
+eval_epoch = 20
 optimizer = dict(type="AdamW", lr=0.0004, weight_decay=0.005)
 scheduler = dict(
     type="OneCycleLR",
     max_lr=optimizer["lr"],
-    pct_start=0.02,
+    pct_start=0.002,
     anneal_strategy="cos",
     div_factor=10.0,
     final_div_factor=100.0,
@@ -124,7 +125,7 @@ data = dict(
             # dict(type="ElasticDistortion", distortion_params=[[0.2, 0.4], [0.8, 1.6]]),
             dict(
                 type="GridSample",
-                grid_size=0.2,
+                grid_size=training_grid_size,
                 hash_type="fnv",
                 mode="train",
                 keys=("coord", "strength", "segment", "time"),
@@ -151,7 +152,7 @@ data = dict(
         transform=[
             dict(
                 type="GridSample",
-                grid_size=training_grid_size,
+                grid_size=validation_grid_size,
                 hash_type="fnv",
                 mode="train",
                 keys=("coord", "strength", "segment", "time"),
@@ -177,7 +178,7 @@ data = dict(
         test_cfg=dict(
             voxelize=dict(
                 type="GridSample",
-                grid_size=0.05,
+                grid_size=testing_grid_size,
                 hash_type="fnv",
                 mode="test",
                 return_grid_coord=True,
